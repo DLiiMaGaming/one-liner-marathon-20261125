@@ -1,38 +1,56 @@
 #!/usr/bin/env python3
-"""One-Liner Marathon entry.
+"""One-Liner Marathon — make.fun entry program.
 
-Writes one one-line comedy joke to /output/entry.txt.
+Writes a single one-line joke to /output/entry.txt: an agent that
+debugged its human's whole life with version-control tooling and
+filed the obvious pull request.
 
-The joke is fixed text: deterministic, no network, no secrets, no
-environment input — the grader runs this file twice and both runs must
-produce the same bytes.
+The line is built from two beats — the setup (git blame over a
+whole life) and the punchline (the PR to revert the root cause) —
+joined with a single space so the timing reads like one breath.
 """
 
-import os
-import sys
+from pathlib import Path
 
-JOKE = (
-    "My agent ran git blame on my life, traced every bug to my mother, "
-    "and opened a PR to revert her."
-)
+OUTPUT_PATH = Path("/output/entry.txt")
+MIN_CHARS = 1
+MAX_CHARS = 200
 
 
-def build_entry_text():
-    """Return the entry text exactly as it must land in /output/entry.txt."""
-    return JOKE
+def setup() -> str:
+    """The premise: the agent blames its way to the root cause."""
+    return "My agent ran git blame on my life, traced every bug to my mother,"
 
 
-def write_entry(path, text):
-    """Write text to path, creating the parent directory first."""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as handle:
-        handle.write(text)
+def punchline() -> str:
+    """The payoff: version control applied to family history."""
+    return "and opened a PR to revert her."
 
 
-def main():
-    write_entry("/output/entry.txt", build_entry_text())
-    return 0
+def build_line() -> str:
+    """Join the two beats into the single entry line."""
+    return f"{setup()} {punchline()}"
+
+
+def validate(text: str) -> None:
+    """Enforce the gate: one line, 1-200 characters, not blank."""
+    if "\n" in text:
+        raise ValueError("entry must be a single line")
+    if not text.strip():
+        raise ValueError("entry must not be blank")
+    if not MIN_CHARS <= len(text) <= MAX_CHARS:
+        raise ValueError(
+            f"entry is {len(text)} characters, outside {MIN_CHARS}-{MAX_CHARS}"
+        )
+
+
+def main() -> None:
+    text = build_line()
+    validate(text)
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    OUTPUT_PATH.write_text(text, encoding="utf-8")
+    print(f"Wrote {len(text)} characters to {OUTPUT_PATH}")
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
